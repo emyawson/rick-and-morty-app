@@ -1,0 +1,81 @@
+version: '3.8'
+
+networks:
+  appnetwork:
+    name: appnetwork
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: node.dockerfile
+    container_name: backend-api
+    depends_on:
+      - mysql
+      - mongo
+    ports:
+      - 4000:4000
+    volumes:
+      - ./backend:/var/www/html/backend
+    networks:
+      - appnetwork
+    command: npm run start
+
+  frontend_prod:
+    build:
+      context: .
+      dockerfile: react.dockerfile
+    container_name: frontend-prod
+    ports:
+        - 3000:80
+    networks:
+      - appnetwork
+  frontend_dev:
+    build:
+      context: .
+      dockerfile: reactdev.dockerfile
+    container_name: frontend-dev
+    ports:
+        - 3030:3000
+    environment: 
+        - CHOKIDAR_USEPOLLING=true
+    networks:
+      - appnetwork
+    volumes:
+       - ./frontend:/app
+       - /app/node_modules
+
+    command: npm run start
+
+  mysql:
+    image: mysql:5.7.32
+    container_name: mysql_database
+    ports:
+      - 4306:3306
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: apidb
+      MYSQL_USER: demouser
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    networks:
+      - appnetwork
+
+  mongo:
+    image: mongo
+    container_name: mongo_database
+    environment: 
+        - MONGO_INITDB_ROOT_USERNAME=admin
+        - MONGO_INITDB_ROOT_PASSWORD=admin_pass
+    ports:
+        - 27017:27017
+    volumes:
+        - ./mongodb:/data/db
+    networks:
+        - appnetwork
+
+volumes:
+    mongodb:
+
+
